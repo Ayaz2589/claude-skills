@@ -10,6 +10,7 @@ A small, portable collection of [Claude Code](https://claude.com/claude-code) sk
 | `kill-sandbox` | Tear down a Docker Sandbox by its git branch, with an unpushed-work safety gate, and keep the sandbox registry current. Args: `<branch> [--force]`. | yes | `docker-sandbox` |
 | `remember` | Summarize the current session into `.claude/context-summaries/`, then prompt you to `/clear`. | yes | `get-up-to-speed` |
 | `get-up-to-speed` | Rebuild working context after a `/clear` (or in a fresh session): read the recovery set plus git state and report a briefing. Args: optional path(s) to read. | yes | `remember` |
+| `review` | Review the current (local, uncommitted or current-branch) work: run the project's tests/checks, review the changed code, fix any real issues, then re-test and re-review in a bounded loop until green and clean. Not a GitHub PR review. Args: optional scope — a path, `staged`, or a base branch. | yes | — |
 
 ## Installing a skill into your project
 
@@ -21,9 +22,11 @@ cp -r docker-sandbox /path/to/your-project/.claude/skills/docker-sandbox
 
 Claude Code discovers skills placed under `.claude/skills/` and makes each one invocable as `/<name>` (e.g. `/docker-sandbox`). Copy only the skills you want — they're independent, except that the two pairs below are designed to be used together. For how skills are discovered and invoked, see the Claude Code skills documentation.
 
+> **A note on the `review` name:** `review` deliberately reuses the name of Claude Code's built-in `/review` (which reviews a published GitHub PR). Installed at `.claude/skills/review/`, it **shadows** that built-in — `/review` will instead mean "test-and-fix my local work." If you want to keep both, install it under a different folder name (e.g. `verify-work`) and match the `name:` in its frontmatter to that folder.
+
 ## The two skill pairs
 
-The four skills form two companion pairs:
+Four of the skills form two companion pairs (`review` stands alone):
 
 - **`remember` ↔ `get-up-to-speed`** — a session-continuity loop. When context fills up, `/remember` writes a summary of the current session to `.claude/context-summaries/` and prompts you to `/clear`. In the next session, `/get-up-to-speed` reads the latest summary (plus your agent-guidance file, README, and git state) and briefs you on what was done and what's next. Both sides expect the shared `.claude/context-summaries/` directory as the handoff location.
 - **`docker-sandbox` ↔ `kill-sandbox`** — a sandbox lifecycle pair. `/docker-sandbox` creates and manages sandboxes (one per feature/branch); `/kill-sandbox <branch>` resolves a branch back to its sandbox and removes it after checking for unpushed work. Both keep a shared **sandbox registry file** (default `docs/sandbox/sandbox-history.md`) current so the set of active and killed sandboxes stays accurate.
